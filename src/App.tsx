@@ -1,32 +1,52 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import './App.css'
+import { useEffect, useRef, useState } from 'react'
+import mapboxgl from 'mapbox-gl';
+
+mapboxgl.accessToken = 'pk.eyJ1IjoiYXBhdWwyMSIsImEiOiJjbGRraDAxaHkxN2t0M3ZzMjJ0bDE2NGx2In0.hlp2WtXrcEDMrdazXclEDQ';
 
 function App() {
-  const [count, setCount] = useState(0)
+  const mapContainer = useRef(null);
+  const map = useRef<mapboxgl.Map>(null);
+  const [lng, setLng] = useState(-70.9);
+  const [lat, setLat] = useState(42.35);
+  const [zoom, setZoom] = useState(9);
+
+  useEffect(() => {
+    map.current = new mapboxgl.Map({
+      container: mapContainer.current,
+      style: 'mapbox://styles/mapbox/streets-v12',
+    });
+  }, []);
+
+  //Might have to change this, try with a valid geojson file
+  const uploadHandler = (file: File) => {
+    map.current?.addSource('geojson_map', {
+      type: 'geojson',
+      data: ''
+    });
+
+    file.text().then((string) => {
+      console.log(string);
+
+      map.current?.getSource('geojson_map').setData({
+        type: 'geojson',
+        data: JSON.parse(string)
+      });
+    });
+  }
 
   return (
-    <div className="App">
-      <div>
-        <a href="https://vitejs.dev" target="_blank">
-          <img src="/vite.svg" className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://reactjs.org" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
+    <div>
+      <input type="file" 
+        id="myFile" 
+        name="filename"  
+        onChange={(e)=>uploadHandler(e.target.files![0])}
+      />
+
+      <div className="sidebar">
+        Longitude: {lng} | Latitude: {lat} | Zoom: {zoom}
       </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.tsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
+
+      <div ref={mapContainer} className="map-container"></div>
     </div>
   )
 }
