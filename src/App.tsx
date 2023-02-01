@@ -31,9 +31,8 @@ function App() {
   const uploadHandler = (file: File) => {
     const source: mapboxgl.GeoJSONSource = map.current?.getSource('geojson-map') as mapboxgl.GeoJSONSource;
 
-    file.text().then((string) => {
-      source.setData(JSON.parse(string));
-    });
+    const url = window.URL.createObjectURL(file);
+    source.setData(url);
 
     if (!map.current?.getLayer('geojson-map-fill')) {
       map.current?.addLayer({
