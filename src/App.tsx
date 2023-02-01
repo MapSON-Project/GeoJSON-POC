@@ -5,33 +5,48 @@ mapboxgl.accessToken = 'pk.eyJ1IjoiYXBhdWwyMSIsImEiOiJjbGRraDAxaHkxN2t0M3ZzMjJ0b
 
 function App() {
   const mapContainer = useRef(null);
-  const map = useRef<mapboxgl.Map>(null);
+  const map = useRef<mapboxgl.Map | null>(null);
   const [lng, setLng] = useState(-70.9);
   const [lat, setLat] = useState(42.35);
   const [zoom, setZoom] = useState(9);
 
   useEffect(() => {
     map.current = new mapboxgl.Map({
-      container: mapContainer.current,
+      container: mapContainer.current as any,
       style: 'mapbox://styles/mapbox/streets-v12',
+      center: [lng, lat],
+      zoom: zoom
+    });
+
+    map.current.on('load', () => {
+      if (!map.current?.getSource('geojson-map')) {
+        map.current?.addSource('geojson-map', {
+          type: 'geojson',
+          data: 'https://d2ad6b4ur7yvpq.cloudfront.net/naturalearth-3.3.0/ne_10m_ports.geojson'
+        });
+      }
     });
   }, []);
 
-  //Might have to change this, try with a valid geojson file
   const uploadHandler = (file: File) => {
-    map.current?.addSource('geojson_map', {
-      type: 'geojson',
-      data: ''
-    });
+    const source: mapboxgl.GeoJSONSource = map.current?.getSource('geojson-map') as mapboxgl.GeoJSONSource;
 
     file.text().then((string) => {
-      console.log(string);
-
-      map.current?.getSource('geojson_map').setData({
-        type: 'geojson',
-        data: JSON.parse(string)
-      });
+      source.setData(JSON.parse(string));
     });
+
+    if (!map.current?.getLayer('geojson-map-fill')) {
+      map.current?.addLayer({
+        id: "geojson-map-fill",
+        type: "fill",
+        source: 'geojson-map',
+        paint: {
+          "fill-opacity": 0.8,
+          "fill-color": "#a88ef5",
+          "fill-outline-color": "#20124d"
+        },
+      });
+    }
   }
 
   return (
