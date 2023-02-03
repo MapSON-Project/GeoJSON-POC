@@ -1,19 +1,17 @@
 import { useEffect, useRef, useState } from 'react'
-import mapboxgl from 'mapbox-gl';
-
-mapboxgl.accessToken = 'pk.eyJ1IjoiYXBhdWwyMSIsImEiOiJjbGRraDAxaHkxN2t0M3ZzMjJ0bDE2NGx2In0.hlp2WtXrcEDMrdazXclEDQ';
+import maplibregl from 'maplibre-gl';
 
 function App() {
   const mapContainer = useRef(null);
-  const map = useRef<mapboxgl.Map | null>(null);
+  const map = useRef<maplibregl.Map | null>(null);
   const [lng, setLng] = useState(-70.9);
   const [lat, setLat] = useState(42.35);
   const [zoom, setZoom] = useState(9);
 
   useEffect(() => {
-    map.current = new mapboxgl.Map({
+    map.current = new maplibregl.Map({
       container: mapContainer.current as any,
-      style: 'mapbox://styles/mapbox/streets-v12',
+      style: 'https://demotiles.maplibre.org/style.json',
       center: [lng, lat],
       zoom: zoom
     });
@@ -22,14 +20,15 @@ function App() {
       if (!map.current?.getSource('geojson-map')) {
         map.current?.addSource('geojson-map', {
           type: 'geojson',
-          data: 'https://d2ad6b4ur7yvpq.cloudfront.net/naturalearth-3.3.0/ne_10m_ports.geojson'
+          data: 'https://d2ad6b4ur7yvpq.cloudfront.net/naturalearth-3.3.0/ne_10m_ports.geojson',
+          tolerance: 1.2
         });
       }
     });
   }, []);
 
   const uploadHandler = (file: File) => {
-    const source: mapboxgl.GeoJSONSource = map.current?.getSource('geojson-map') as mapboxgl.GeoJSONSource;
+    const source: maplibregl.GeoJSONSource = map.current?.getSource('geojson-map') as maplibregl.GeoJSONSource;
 
     const url = window.URL.createObjectURL(file);
     source.setData(url);
