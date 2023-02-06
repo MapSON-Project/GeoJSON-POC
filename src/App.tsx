@@ -11,7 +11,6 @@ function App() {
   const [showPrompt, setShowprompt] = useState(false);
   const [newName, setNewname] = useState('')
   const [featToChange, setfeatToChange] = useState(null)
-  const [data, setData] = useState(null)
 
   useEffect(() => {
     map.current = new maplibregl.Map({
@@ -26,7 +25,8 @@ function App() {
         map.current?.addSource('geojson-map', {
           type: 'geojson',
           data: 'https://d2ad6b4ur7yvpq.cloudfront.net/naturalearth-3.3.0/ne_10m_ports.geojson',
-          tolerance: 1.2
+          tolerance: 1.2,
+          generateId: true
         });
       }
     });
@@ -38,7 +38,6 @@ function App() {
     const url = window.URL.createObjectURL(file)
     const res = await axios.get(url)
     source.setData(res.data);
-    setData(res.data)
 
     if (!map.current?.getLayer('geojson-map-fill')) {
       map.current?.addLayer({
@@ -61,25 +60,21 @@ function App() {
         }
       })
       map.current.on('dblclick', 'geojson-map-fill', function(e) {
-        setfeatToChange(e.features[0])
+        //console.log(e.features[0])
+        setfeatToChange(e.features[0].id)
         setShowprompt(true)
         });
     }
   }
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = (e) => {
     setShowprompt(false)
-    console.log(data)
-    const newSource = data.features.map(feat => {
-      if(feat.properties.name === featToChange.properties.name){
-        feat.properties.name_en = newName
-      }
-      return feat
-    })
-    data.features = newSource
-    setData(data)
     const source: maplibregl.GeoJSONSource = map.current?.getSource('geojson-map') as maplibregl.GeoJSONSource;
-    source.setData(data)
+    
+    let geojson = source._data
+    geojson.features[featToChange].properties.name_en = newName
+    
+    source.setData(geojson)
     setNewname('')
   }
 
